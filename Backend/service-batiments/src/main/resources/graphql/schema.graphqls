@@ -1,0 +1,99 @@
+enum BuildingType {
+    HOUSE
+    APARTMENT_BUILDING
+    HOTEL
+    OFFICE
+    FACTORY
+    PUBLIC_BUILDING
+}
+
+enum BuildingStatus {
+    ACTIVE
+    INACTIVE
+    TO_ASSIGN
+}
+
+enum MeterStatus {
+    ACTIVE
+    REPLACED
+    FAULTY
+}
+
+type Building {
+    id: ID!
+    code: String!
+    name: String!
+    type: BuildingType!
+    status: BuildingStatus!
+    address: String
+    city: String
+    surfaceM2: Float
+    occupantsCount: Int
+    tariffCategory: String
+}
+
+type Meter {
+    id: ID!
+    meterRef: String!
+    initialIndexM3: Float!
+    installedAt: String
+    removedAt: String
+    status: MeterStatus!
+}
+
+type ManagerAssignment {
+    id: ID!
+    managerId: ID!
+    assignedAt: String!
+    unassignedAt: String
+    reason: String
+}
+
+type BaselineProfile {
+    id: ID!
+    baselineDailyM3: Float!
+    method: String!
+    validFrom: String
+    computedAt: String
+}
+
+input BuildingCreateInput {
+    code: String!
+    name: String!
+    type: BuildingType!
+    address: String
+    city: String
+    surfaceM2: Float
+    occupantsCount: Int
+    tariffCategory: String
+}
+
+input MeterCreateInput {
+    buildingId: ID!
+    meterRef: String!
+    initialIndexM3: Float!
+    installedAt: String
+}
+
+input AssignManagerInput {
+    buildingId: ID!
+    managerId: ID!
+    reason: String
+}
+
+type Query {
+    buildings: [Building!]!
+    buildingById(id: ID!): Building
+    buildingByCode(code: String!): Building
+    metersByBuilding(buildingId: ID!): [Meter!]!
+}
+
+type Mutation {
+    createBuilding(input: BuildingCreateInput!): Building!
+    activateBuilding(id: ID!): Building!
+    deactivateBuilding(id: ID!): Building!
+    installMeter(input: MeterCreateInput!): Meter!
+    replaceMeter(buildingId: ID!, oldMeterId: ID!, newMeter: MeterCreateInput!): Meter!
+    assignManager(input: AssignManagerInput!): ManagerAssignment!
+    computeBaseline(buildingId: ID!, baselineDailyM3: Float!, method: String!): BaselineProfile!
+}
