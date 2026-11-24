@@ -1,5 +1,6 @@
 package com.aquasentinel.servicedetectionfuites.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -26,6 +27,7 @@ public class LeakDetection {
     private String ruleId;                // ASSOCIATION → DetectionRule (* → 1)
 
     private LocalDateTime detectedAt;
+    @JsonProperty("isSimulated")
     private boolean isSimulated;
     private DetectionMethod method;
     private Double measuredValue;
