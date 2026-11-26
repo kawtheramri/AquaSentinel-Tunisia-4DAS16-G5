@@ -86,7 +86,7 @@ Pour la démonstration, les relevés de consommation sont produits par un simula
 
 - **Une base de données par microservice** : aucune clé étrangère entre services ; les liens passent par des identifiants logiques (`buildingId`, `userId`…).
 - **Découverte de services** avec Eureka : chaque service s'enregistre sous son nom, pas sous une adresse fixe.
-- **Haute disponibilité** : deux serveurs Eureka répliqués et plusieurs instances pour les services les plus sollicités.
+- **Haute disponibilité** : deux serveurs Eureka répliqués et deux instances pour les trois services les plus sollicités.
 - **Polyglot persistence** : MySQL, PostgreSQL et MongoDB selon le besoin de chaque service.
 
 **Évolutions prévues** : API Gateway (Spring Cloud Gateway), Config Server, sécurité Keycloak (JWT), communication asynchrone avec RabbitMQ, conteneurisation Docker Compose.
@@ -118,7 +118,7 @@ Pour la démonstration, les relevés de consommation sont produits par un simula
 | Serveurs Eureka | 2 serveurs répliqués : **8761** (profil `peer1`) et **8762** (profil `peer2`) |
 | Réplication | Chaque serveur s'enregistre auprès de l'autre ; les deux affichent le même registre |
 | Clients | Tous les microservices déclarent les deux serveurs dans `defaultZone` |
-| Instances multiples | **Building** (8081, 8091) et **Leak Detection** (8084, 8094) |
+| Instances multiples | **Building** (8081, 8091), **Water Consumption** (8083, 8093) et **Leak Detection** (8084, 8094) |
 | Identifiant d'instance | `${spring.application.name}:${server.port}` pour distinguer les instances |
 
 Configuration côté client (identique dans chaque microservice) :
@@ -186,8 +186,8 @@ cd Backend/<nom-du-service>
 |---|---|---|
 | Building (GraphQL) | `POST http://localhost:8081/graphql` | `{ buildings { id code name status } }` |
 | Leak Detection | Swagger : `http://localhost:8084/swagger-ui/index.html` | `GET /api/leaks`, `POST /api/leaks`, `PATCH /api/leaks/{id}/verify` |
-| Water Consumption | `http://localhost:8083` | voir les controllers du service |
-| Maintenance | `http://localhost:8085` | voir les controllers du service |
+| Spare Parts | Swagger : `http://localhost:8086/swagger-ui/index.html` | pièces, catégories, fournisseurs, réservations |
+| User, Water Consumption, Maintenance, Billing | `http://localhost:8082` · `8083` · `8085` · `8087` | API REST décrites dans les controllers de chaque service |
 
 Chaque service renvoie des erreurs normalisées : **400** (requête invalide), **404** (ressource introuvable), **409** (conflit métier).
 
@@ -234,8 +234,9 @@ AquaSentinel-Tunisia-4DAS16-G5/
 | Serveur Eureka fonctionnel | ✅ |
 | Deux serveurs Eureka répliqués (8761, 8762) | ✅ |
 | Tous les microservices enregistrés comme clients Eureka | ✅ |
-| Deux instances de Building et de Leak Detection | ✅ |
+| Deux instances de Building, Water Consumption et Leak Detection | ✅ |
 | Service commun en GraphQL (entités, associations, CRUD) | ✅ |
-| Microservices individuels (entités, associations, CRUD) | en cours |
+| Six microservices individuels (entités, associations, CRUD) | ✅ |
+| Projet fonctionnel sur la machine de chaque membre | ✅ |
 | API Gateway, Config Server, Keycloak, RabbitMQ | prévu |
 | Front-end Angular | prévu |
