@@ -39,15 +39,6 @@ Encadrant : **Mr Ghassen Hamouda**
 ---
 
 ## 1. Contexte
-
-La Tunisie fait face à un stress hydrique croissant. Dans les immeubles, les hôtels et les établissements publics, une fuite d'eau reste souvent invisible jusqu'à la réception de la facture.
-
-**AquaSentinel Tunisia** couvre tout le cycle de traitement d'une fuite :
-
-```
-Relevé de consommation  →  Détection de la fuite  →  Intervention (technicien + pièces)  →  Facture et économies
-```
-
 Pour la démonstration, les relevés de consommation sont produits par un simulateur.
 
 **Acteurs**
@@ -86,7 +77,7 @@ Pour la démonstration, les relevés de consommation sont produits par un simula
 
 - **Une base de données par microservice** : aucune clé étrangère entre services ; les liens passent par des identifiants logiques (`buildingId`, `userId`…).
 - **Découverte de services** avec Eureka : chaque service s'enregistre sous son nom, pas sous une adresse fixe.
-- **Haute disponibilité** : deux serveurs Eureka répliqués et deux instances pour les trois services les plus sollicités.
+- **Haute disponibilité** : deux serveurs Eureka répliqués et plusieurs services exécutés en double instance (Building, Water Consumption, Leak Detection et Spare Parts).
 - **Polyglot persistence** : MySQL, PostgreSQL et MongoDB selon le besoin de chaque service.
 
 **Évolutions prévues** : API Gateway (Spring Cloud Gateway), Config Server, sécurité Keycloak (JWT), communication asynchrone avec RabbitMQ, conteneurisation Docker Compose.
@@ -102,7 +93,7 @@ Pour la démonstration, les relevés de consommation sont produits par un simula
 | Water Consumption Service | Relevés, corrections, synthèses de consommation | Spring Boot REST | PostgreSQL | 8083, 8093 |
 | Leak Detection Service | Détection des fuites, niveau de risque, perte estimée, vérification | Spring Boot REST | MongoDB | 8084, 8094 |
 | Maintenance Service | Demandes d'intervention, affectation, historique des statuts | Spring Boot REST | MySQL | 8085 |
-| Spare Parts Service | Stock, réservation et sortie des pièces | Spring Boot REST | MySQL | 8086 |
+| Spare Parts Service | Stock, réservation et sortie des pièces | Spring Boot REST | MySQL | 8086, 8096 |
 | Billing Service | Factures par tranches et économies réalisées | Spring Boot REST | MySQL | 8087 |
 
 **Service commun et technologie différente** : Building Service expose son API en **GraphQL** (endpoint unique `POST /graphql`). Le client choisit exactement les champs dont il a besoin, contrairement aux autres services qui exposent des API REST.
@@ -118,7 +109,7 @@ Pour la démonstration, les relevés de consommation sont produits par un simula
 | Serveurs Eureka | 2 serveurs répliqués : **8761** (profil `peer1`) et **8762** (profil `peer2`) |
 | Réplication | Chaque serveur s'enregistre auprès de l'autre ; les deux affichent le même registre |
 | Clients | Tous les microservices déclarent les deux serveurs dans `defaultZone` |
-| Instances multiples | **Building** (8081, 8091), **Water Consumption** (8083, 8093) et **Leak Detection** (8084, 8094) |
+| Instances multiples | **Building** (8081, 8091), **Water Consumption** (8083, 8093), **Leak Detection** (8084, 8094) et **Spare Parts** (8086, 8096) |
 | Identifiant d'instance | `${spring.application.name}:${server.port}` pour distinguer les instances |
 
 Configuration côté client (identique dans chaque microservice) :
@@ -126,117 +117,7 @@ Configuration côté client (identique dans chaque microservice) :
 ```properties
 eureka.client.service-url.defaultZone=http://localhost:8761/eureka,http://localhost:8762/eureka
 eureka.instance.instance-id=${spring.application.name}:${server.port}
-```
 
-### Dashboard – serveur 8761
+La Tunisie fait face à un stress hydrique croissant. Dans les immeubles, les hôtels et les établissements publics, une fuite d'eau reste souvent invisible jusqu'à la réception de la facture.
 
-![Eureka 8761](Documentation/Captures/eureka-8761.png)
-
-### Dashboard – serveur 8762
-
-![Eureka 8762](Documentation/Captures/eureka-8762.png)
-
----
-
-## 6. Lancement du projet
-
-### Prérequis
-
-| Outil | Version / port |
-|---|---|
-| JDK | 21 |
-| Maven | wrapper inclus (`mvnw`) |
-| MySQL (XAMPP / MariaDB) | port **3307**, utilisateur `root` |
-| PostgreSQL | port **5433**, base `water_db`, utilisateur `postgres` |
-| MongoDB | port **27017**, base `leak_db` créée automatiquement |
-
-### Ordre de démarrage
-
-**1. Serveurs Eureka**
-
-```bash
-cd Backend/serveur-eureka
-./mvnw spring-boot:run -Dspring-boot.run.profiles=peer1
-./mvnw spring-boot:run -Dspring-boot.run.profiles=peer2     # dans un second terminal
-```
-
-**2. Microservices** (un terminal par service)
-
-```bash
-cd Backend/<nom-du-service>
-./mvnw spring-boot:run
-```
-
-**3. Seconde instance d'un service**
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8094
-```
-
-**4. Vérification**
-
-- http://localhost:8761
-- http://127.0.0.1:8762
-
----
-
-## 7. Tests des API
-
-| Service | Accès | Exemple |
-|---|---|---|
-| Building (GraphQL) | `POST http://localhost:8081/graphql` | `{ buildings { id code name status } }` |
-| Leak Detection | Swagger : `http://localhost:8084/swagger-ui/index.html` | `GET /api/leaks`, `POST /api/leaks`, `PATCH /api/leaks/{id}/verify` |
-| Spare Parts | Swagger : `http://localhost:8086/swagger-ui/index.html` | pièces, catégories, fournisseurs, réservations |
-| User, Water Consumption, Maintenance, Billing | `http://localhost:8082` · `8083` · `8085` · `8087` | API REST décrites dans les controllers de chaque service |
-
-Chaque service renvoie des erreurs normalisées : **400** (requête invalide), **404** (ressource introuvable), **409** (conflit métier).
-
----
-
-## 8. Structure du dépôt
-
-```
-AquaSentinel-Tunisia-4DAS16-G5/
-├── Backend/
-│   ├── serveur-eureka/              Serveur de découverte (profils peer1 / peer2)
-│   ├── service-batiments/           Building Service – commun (GraphQL)
-│   ├── service-utilisateurs/        User Service
-│   ├── service-consommation/        Water Consumption Service
-│   ├── service-detection-fuites/    Leak Detection Service
-│   ├── service-interventions/       Maintenance Service
-│   ├── service-pieces-rechange/     Spare Parts Service
-│   ├── service-facturation/         Billing Service
-│   └── docker-compose.yml
-├── Frontend/                        Application Angular (à venir)
-├── Documentation/
-│   ├── Captures/                    Captures des dashboards Eureka
-│   ├── Diagrams/                    Diagrammes d'architecture et de classes
-│   ├── Presentation/
-│   └── Dossier_Technique_AquaSentinel.docx
-└── README.md
-```
-
----
-
-## 9. Organisation du travail
-
-- Une branche par fonctionnalité : `feature/<service>` ; intégration sur `feature/microservices`, puis fusion dans `main`.
-- Fusion par **pull request** relue par un autre membre.
-- Chaque membre travaille uniquement dans le dossier de son microservice ; le serveur Eureka et le service commun sont modifiés après accord de l'équipe.
-- Messages de commit au format `feat(service): …`, `fix(service): …`, `docs: …`.
-
----
-
-## 10. Avancement
-
-| Tâche | État |
-|---|:--:|
-| Serveur Eureka fonctionnel | ✅ |
-| Deux serveurs Eureka répliqués (8761, 8762) | ✅ |
-| Tous les microservices enregistrés comme clients Eureka | ✅ |
-| Deux instances de Building, Water Consumption et Leak Detection | ✅ |
-| Service commun en GraphQL (entités, associations, CRUD) | ✅ |
-| Six microservices individuels (entités, associations, CRUD) | ✅ |
-| Projet fonctionnel sur la machine de chaque membre | ✅ |
-| API Gateway, Config Server, Keycloak, RabbitMQ | prévu |
-| Front-end Angular | prévu |
+**AquaSentinel Tunisia** couvre tout le cycle de traitement d'une fuite :
