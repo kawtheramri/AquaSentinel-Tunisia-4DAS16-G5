@@ -1,9 +1,9 @@
 # user-service
 
-Service REST autonome (Java 17, Spring Boot 3, PostgreSQL, Flyway) sur le port 8081. Swagger UI : http://localhost:8081/swagger-ui.html.
+Service REST (Java 17, Spring Boot 3, PostgreSQL, Flyway) sur le port 8081. Le service s'enregistre comme client Eureka auprès de http://localhost:8761/eureka/ (configurable avec EUREKA_DEFAULT_ZONE). Swagger UI : http://localhost:8081/swagger-ui.html.
 
 ## Lancement
-Pour exécuter le service avec le reste du projet sans Docker, lancer le profil local depuis ce dossier. Il utilise H2 en mémoire sur le port 8088, évitant la base partagée et le port 8081 utilisé par service-batiments :
+Pour exécuter le service avec le reste du projet sans Docker, démarrer d'abord Eureka sur le port 8761, puis lancer le profil local depuis ce dossier. Il utilise H2 en mémoire sur le port 8088, évitant la base partagée et le port 8081 utilisé par service-batiments :
 
     .\mvnw.cmd -Dspring-boot.run.profiles=local spring-boot:run
 
@@ -14,6 +14,7 @@ Variables : SERVER_PORT (8081), DB_URL (jdbc:postgresql://localhost:5432/user_db
     .\mvnw.cmd -Dspring-boot.run.profiles=local spring-boot:run
 
 Pour PostgreSQL, lancer docker compose up -d user-db puis .\mvnw.cmd spring-boot:run. Cela utilise une base dédiée user_db sur le port 5432, distincte de water_db sur le port 5433. Si service-batiments tourne en même temps, définir SERVER_PORT=8088 avant le lancement.
+.
 
 Le fichier docker-compose.yml démarre uniquement PostgreSQL. Pour construire l'image du service : docker build -t user-service . puis docker run --rm -p 8088:8081 -e DB_URL=jdbc:postgresql://host.docker.internal:5432/user_db -e DB_USERNAME=user -e DB_PASSWORD=user user-service.
 

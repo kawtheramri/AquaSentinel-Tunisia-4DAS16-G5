@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8088}
+  port: ${SERVER_PORT:8082}
 spring:
   datasource:
     url: jdbc:h2:mem:user_service_local;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE

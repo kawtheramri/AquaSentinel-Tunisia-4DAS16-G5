@@ -9,3 +9,6 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+eureka:
+  client:
+    enabled: false
