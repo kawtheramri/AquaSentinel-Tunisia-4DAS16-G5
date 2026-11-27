@@ -277,6 +277,9 @@ public class SparePartService {
     }
 
     public List<Reservation> findAllReservations(Long maintenanceRequestId, ReservationStatus status) {
+        if (maintenanceRequestId != null && status != null) {
+            return reservationRepo.findByMaintenanceRequestIdAndStatusOrderByReservedAtDesc(maintenanceRequestId, status);
+        }
         if (maintenanceRequestId != null) {
             return reservationRepo.findByMaintenanceRequestIdOrderByReservedAtDesc(maintenanceRequestId);
         }
